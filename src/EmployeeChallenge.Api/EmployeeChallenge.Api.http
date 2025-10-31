@@ -1,0 +1,128 @@
+@baseUrl = http://localhost:5098
+@apiVersion = api/v1
+
+### Variables (will be set after login)
+@token =
+@employeeId =
+
+########################################
+# Authentication
+########################################
+
+### Login as Admin
+# @name loginAdmin
+POST {{baseUrl}}/{{apiVersion}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "admin",
+  "password": "Admin@123"
+}
+
+### Login as Manager
+# @name loginManager
+POST {{baseUrl}}/{{apiVersion}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "manager",
+  "password": "Manager@123"
+}
+
+### Login as Employee
+# @name loginEmployee
+POST {{baseUrl}}/{{apiVersion}}/auth/login
+Content-Type: application/json
+
+{
+  "username": "employee",
+  "password": "Employee@123"
+}
+
+########################################
+# Employees - Query Operations
+########################################
+
+### Get All Employees (with pagination)
+GET {{baseUrl}}/{{apiVersion}}/employees?page=1&pageSize=10
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Get All Employees (default pagination)
+GET {{baseUrl}}/{{apiVersion}}/employees
+Authorization: Bearer {{token}}
+Accept: application/json
+
+### Get Employee by ID
+GET {{baseUrl}}/{{apiVersion}}/employees/{{employeeId}}
+Authorization: Bearer {{token}}
+Accept: application/json
+
+########################################
+# Employees - Command Operations
+########################################
+
+### Create Employee (without supervisor)
+# @name createEmployee
+POST {{baseUrl}}/{{apiVersion}}/employees
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe",
+  "email": "john.doe@example.com",
+  "supervisorId": null,
+  "isSupervisor": false
+}
+
+### Create Supervisor
+POST {{baseUrl}}/{{apiVersion}}/employees
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "firstName": "Jane",
+  "lastName": "Smith",
+  "email": "jane.smith@example.com",
+  "supervisorId": null,
+  "isSupervisor": true
+}
+
+### Create Employee with Supervisor
+POST {{baseUrl}}/{{apiVersion}}/employees
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "firstName": "Bob",
+  "lastName": "Johnson",
+  "email": "bob.johnson@example.com",
+  "supervisorId": "{{employeeId}}",
+  "isSupervisor": false
+}
+
+### Update Employee
+PUT {{baseUrl}}/{{apiVersion}}/employees/{{employeeId}}
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "firstName": "John",
+  "lastName": "Doe Updated",
+  "email": "john.doe.updated@example.com",
+  "supervisorId": null,
+  "isSupervisor": false
+}
+
+### Delete Employee
+DELETE {{baseUrl}}/{{apiVersion}}/employees/{{employeeId}}
+Authorization: Bearer {{token}}
+
+########################################
+# Health Check
+########################################
+
+### Health Check
+GET {{baseUrl}}/health
+Accept: application/json
