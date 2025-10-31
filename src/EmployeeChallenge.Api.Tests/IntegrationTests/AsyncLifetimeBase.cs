@@ -11,6 +11,7 @@ public abstract class AsyncLifetimeBase : IAsyncLifetime, IDisposable
 {
     private ApplicationDbContext? _context;
     private bool _disposed;
+    private UnitOfWork? _unitOfWork;
 
     protected AsyncLifetimeBase(ITestOutputHelper testOutputHelper)
     {
@@ -26,7 +27,16 @@ public abstract class AsyncLifetimeBase : IAsyncLifetime, IDisposable
 
     public IClock Clock { get; protected set; } = new Clock();
 
-    public IUnitOfWork CreateUnitOfWork() => new UnitOfWork(Context);
+    public IUnitOfWork CreateUnitOfWork()
+    {
+        if (_unitOfWork != null)
+        {
+            return _unitOfWork;
+        }
+
+        _unitOfWork = new UnitOfWork(Context);
+        return _unitOfWork;
+    }
 
     public async Task InitializeAsync()
     {
@@ -68,6 +78,7 @@ public abstract class AsyncLifetimeBase : IAsyncLifetime, IDisposable
         {
             OnDisposeAsync().GetAwaiter().GetResult();
             _context?.Dispose();
+            _unitOfWork?.Dispose();
         }
 
         _disposed = true;

@@ -34,9 +34,7 @@ internal sealed class EmployeeDeleteCommandHandler(IEmployeeRepository repositor
                 { "DirectReports", $"Cannot delete employee with direct reports. {directReports.Length} cases." }
             };
 
-            return Result.Failure(
-                ErrorResult.Validation(nameof(EmployeeDeleteCommand), validationErrors)
-            );
+            return Result.Failure(ErrorResult.Validation(nameof(EmployeeDeleteCommand), validationErrors));
         }
 
         repository.Remove(employee);

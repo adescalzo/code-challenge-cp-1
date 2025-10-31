@@ -12,13 +12,13 @@ public class UserRepositoryTests(ITestOutputHelper output) : AsyncLifetimeBase(o
 
     protected override async Task OnInitializeAsync()
     {
-        await Context.Database.EnsureCreatedAsync();
+        await Context.Database.EnsureCreatedAsync().ConfigureAwait(false);
         _repository = new UserRepository(CreateUnitOfWork());
     }
 
     protected override async Task OnDisposeAsync()
     {
-        await Context.Database.EnsureDeletedAsync();
+        await Context.Database.EnsureDeletedAsync().ConfigureAwait(false);
     }
 
     [Fact]

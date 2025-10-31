@@ -11,28 +11,15 @@ internal sealed class LoginCommandHandler(
     IAuthService authService)
     : ICommandHandler<LoginCommand, Result<AuthResponse>>
 {
-    public async Task<Result<AuthResponse>> Handle(
-        LoginCommand command,
-        CancellationToken cancellationToken)
+    public async Task<Result<AuthResponse>> Handle(LoginCommand command, CancellationToken cancellationToken)
     {
         var payload = command.Payload;
-
-        // Find user
         var user = await repository.GetByUsernameAsync(payload.Username, cancellationToken).ConfigureAwait(false);
-        if (user is null)
+        if (user is null || !authService.VerifyPassword(payload.Password, user.Password))
         {
             return Result.Failure<AuthResponse>(ErrorResult.Unauthorized("Invalid username or password"));
         }
 
-        // Verify password
-        if (!authService.VerifyPassword(payload.Password, user.Password))
-        {
-            return Result.Failure<AuthResponse>(
-                ErrorResult.Unauthorized("Invalid username or password")
-            );
-        }
-
-        // Generate JWT token
         var token = authService.GenerateJwtToken(user);
 
         return Result.Success(new AuthResponse(token, user.Username, user.Email));
