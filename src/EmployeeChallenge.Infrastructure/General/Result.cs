@@ -1,6 +1,6 @@
 using EmployeeChallenge.Infrastructure.Exceptions;
 
-namespace EmployeeChallenge.Infrastructure;
+namespace EmployeeChallenge.Infrastructure.General;
 
 public enum ErrorDefinition
 {

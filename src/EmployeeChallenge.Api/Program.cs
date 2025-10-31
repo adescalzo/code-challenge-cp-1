@@ -1,4 +1,3 @@
-using System.Text;
 using Asp.Versioning;
 using EmployeeChallenge.Api.Core;
 using EmployeeChallenge.Api.Infrastructure.Configuration;
@@ -6,32 +5,12 @@ using EmployeeChallenge.Infrastructure;
 using EmployeeChallenge.Infrastructure.Data;
 using EmployeeChallenge.Infrastructure.Extensions;
 using EmployeeChallenge.Infrastructure.Mediator;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure Problem Details
-// Configure DbContext with In-Memory Database
-// Register IClock for ApplicationDbContext
-builder.Services.AddSingleton<IClock, Clock>();
-
-// Register the seeder
-builder.Services.AddScoped<IDbSeeder, ApplicationDbContextSeeder>();
-builder.Services.AddDbContext<ApplicationDbContext>((serviceProvider, options) =>
-{
-    options.UseInMemoryDatabase("EmployeeChallengeDb");
-
-    options.UseAsyncSeeding(async (context, _, cancellationToken) =>
-    {
-        var seeder = serviceProvider.GetRequiredService<IDbSeeder>();
-        await seeder.SeedAsync(cancellationToken).ConfigureAwait(false);
-    });
-});
-
-// Register DbContext for UnitOfWork
-builder.Services.AddScoped<DbContext>(sp => sp.GetRequiredService<ApplicationDbContext>());
+// Add services to the container
+builder.Services.AddGeneralServices();
+builder.Services.AddDataServices();
 
 // Configure error handling and problem details
 builder.Services.AddProblemDetailsConfiguration();
@@ -42,17 +21,7 @@ builder.Services.AddResponseCompressionConfiguration();
 builder.Services.AddHealthChecks();
 
 // Configure API Versioning
-builder.Services.AddApiVersioning(options =>
-{
-    options.DefaultApiVersion = new ApiVersion(1);
-    options.ReportApiVersions = true;
-    options.AssumeDefaultVersionWhenUnspecified = true;
-    options.ApiVersionReader = new UrlSegmentApiVersionReader();
-}).AddApiExplorer(options =>
-{
-    options.GroupNameFormat = "'v'V";
-    options.SubstituteApiVersionInUrl = true;
-});
+builder.Services.AddApiVersionConfiguration();
 
 // Configure JWT Authentication
 builder.Services.AddJwtAuthentication(builder.Configuration);

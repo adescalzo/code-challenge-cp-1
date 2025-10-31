@@ -1,3 +1,4 @@
+using EmployeeChallenge.Infrastructure.General;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace EmployeeChallenge.Infrastructure.Extensions;

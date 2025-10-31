@@ -1,4 +1,4 @@
-namespace EmployeeChallenge.Infrastructure;
+namespace EmployeeChallenge.Infrastructure.General;
 
 public interface IClock
 {

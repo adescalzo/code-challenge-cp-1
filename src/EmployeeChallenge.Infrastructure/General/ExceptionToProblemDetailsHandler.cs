@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 
-namespace EmployeeChallenge.Infrastructure;
+namespace EmployeeChallenge.Infrastructure.General;
 
 public sealed class ExceptionToProblemDetailsHandler(
     IProblemDetailsService problemDetailsService,
@@ -41,6 +41,6 @@ public sealed class ExceptionToProblemDetailsHandler(
             Exception = exception,
             HttpContext = httpContext,
             ProblemDetails = problemDetails
-        });
+        }).ConfigureAwait(false);
     }
 }

@@ -1,6 +1,7 @@
 using EmployeeChallenge.Api.Core;
 using EmployeeChallenge.Infrastructure;
 using EmployeeChallenge.Infrastructure.Data;
+using EmployeeChallenge.Infrastructure.General;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Xunit.Abstractions;
@@ -11,6 +12,7 @@ public abstract class AsyncLifetimeBase : IAsyncLifetime, IDisposable
 {
     private ApplicationDbContext? _context;
     private bool _disposed;
+    private UnitOfWork? _unitOfWork;
 
     protected AsyncLifetimeBase(ITestOutputHelper testOutputHelper)
     {
@@ -24,9 +26,18 @@ public abstract class AsyncLifetimeBase : IAsyncLifetime, IDisposable
 
     public IConfigurationRoot ConfigurationRoot { get; private set; } = default!;
 
-    public IClock Clock { get; protected set; } = new Clock();
+    private IClock Clock { get; set; } = new Clock();
 
-    public IUnitOfWork CreateUnitOfWork() => new UnitOfWork(Context);
+    protected IUnitOfWork CreateUnitOfWork()
+    {
+        if (_unitOfWork != null)
+        {
+            return _unitOfWork;
+        }
+
+        _unitOfWork = new UnitOfWork(Context);
+        return _unitOfWork;
+    }
 
     public async Task InitializeAsync()
     {
@@ -68,6 +79,7 @@ public abstract class AsyncLifetimeBase : IAsyncLifetime, IDisposable
         {
             OnDisposeAsync().GetAwaiter().GetResult();
             _context?.Dispose();
+            _unitOfWork?.Dispose();
         }
 
         _disposed = true;

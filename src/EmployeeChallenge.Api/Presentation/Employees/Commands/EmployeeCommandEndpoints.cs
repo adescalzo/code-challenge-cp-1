@@ -1,5 +1,5 @@
-using EmployeeChallenge.Infrastructure;
 using EmployeeChallenge.Infrastructure.Extensions;
+using EmployeeChallenge.Infrastructure.General;
 using EmployeeChallenge.Infrastructure.Mediator;
 using Microsoft.AspNetCore.Mvc;
 
@@ -23,7 +23,10 @@ internal class EmployeeCommandEndpoints : IEndpoint
                 .SendAsync<EmployeeCreateCommand, Result<Guid>>(new EmployeeCreateCommand(payload), ct)
                 .ConfigureAwait(false);
 
-            return result.ToCreatedAtRouteResult(EmployeesConstants.EndpointGetEmployeeByIdName, result.Value);
+            return result.ToCreatedAtRouteResult(
+                EmployeesConstants.EndpointGetEmployeeByIdName,
+                new { id = result.Value }
+            );
         })
         .WithName("CreateEmployee")
         .WithOpenApi()
@@ -43,7 +46,10 @@ internal class EmployeeCommandEndpoints : IEndpoint
                 .SendAsync<EmployeeUpdateCommand, Result<Guid>>(new EmployeeUpdateCommand(id, payload), ct)
                 .ConfigureAwait(false);
 
-            return result.ToCreatedAtRouteResult(EmployeesConstants.EndpointGetEmployeeByIdName, result.Value);
+            return result.ToCreatedAtRouteResult(
+                EmployeesConstants.EndpointGetEmployeeByIdName,
+                new { id = result.Value }
+            );
         })
         .WithName("UpdateEmployee")
         .WithOpenApi()

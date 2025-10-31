@@ -1,3 +1,4 @@
+using EmployeeChallenge.Infrastructure.General;
 using EmployeeChallenge.Infrastructure.Middleware;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;

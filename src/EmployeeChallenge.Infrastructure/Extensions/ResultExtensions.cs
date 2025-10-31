@@ -1,4 +1,5 @@
 using EmployeeChallenge.Infrastructure.Exceptions;
+using EmployeeChallenge.Infrastructure.General;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

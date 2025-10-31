@@ -1,7 +1,7 @@
 using EmployeeChallenge.Api.Core.Entities;
 using EmployeeChallenge.Api.Core.Repositories;
 using EmployeeChallenge.Api.Presentation.Employees.Commands;
-using EmployeeChallenge.Infrastructure;
+using EmployeeChallenge.Infrastructure.General;
 using EmployeeChallenge.Infrastructure.Mediator;
 
 namespace EmployeeChallenge.Api.Application.Handlers.Commands;
@@ -14,11 +14,11 @@ internal sealed class EmployeeUpdateCommandHandler(IEmployeeRepository repositor
         CancellationToken cancellationToken)
     {
         var payload = command.Payload;
-        var employeeExists = await repository
-            .Any(e => e.Id == command.Id)
+        var employee = await repository
+            .GetById(command.Id, tracking: true)
             .ConfigureAwait(false);
 
-        if (!employeeExists)
+        if (employee is null)
         {
             return Result.Failure<Guid>(
                 ErrorResult.NotFound(nameof(Employee), command.Id.ToString())
@@ -40,16 +40,15 @@ internal sealed class EmployeeUpdateCommandHandler(IEmployeeRepository repositor
             return Result.Failure<Guid>(supervisorValidations.Error);
         }
 
+        employee.Update(
+            payload.FirstName,
+            payload.LastName,
+            payload.Email,
+            payload.IsSupervisor,
+            payload.SupervisorId
+        );
 
-        await repository.ExecuteUpdate(
-            setters => setters
-                .SetProperty(e => e.FirstName, payload.FirstName)
-                .SetProperty(e => e.LastName, payload.LastName)
-                .SetProperty(e => e.Email, payload.Email)
-                .SetProperty(e => e.SupervisorId, payload.SupervisorId)
-                .SetProperty(e => e.UpdatedAt, DateTime.UtcNow),
-            cancellationToken
-        ).ConfigureAwait(false);
+        repository.Update([employee]);
 
         return Result.Success(command.Id);
     }

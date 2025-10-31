@@ -1,8 +1,8 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using EmployeeChallenge.Api.Core.Entities;
+using EmployeeChallenge.Infrastructure.General;
 using Microsoft.IdentityModel.Tokens;
 
 namespace EmployeeChallenge.Api.Application.Services;
@@ -14,7 +14,11 @@ internal interface IAuthService
     bool VerifyPassword(string password, string passwordHash);
 }
 
-internal class AuthService(IConfiguration configuration) : IAuthService
+internal class AuthService(
+    IClock clock,
+    IEncryptionService encryptionService,
+    IConfiguration configuration
+) : IAuthService
 {
     public string GenerateJwtToken(User user)
     {
@@ -39,7 +43,7 @@ internal class AuthService(IConfiguration configuration) : IAuthService
             issuer: issuer,
             audience: audience,
             claims: claims,
-            expires: DateTime.UtcNow.AddMinutes(expirationMinutes),
+            expires: clock.UtcNow.AddMinutes(expirationMinutes),
             signingCredentials: credentials
         );
 
@@ -48,13 +52,13 @@ internal class AuthService(IConfiguration configuration) : IAuthService
 
     public string HashPassword(string password)
     {
-        var hashedBytes = SHA256.HashData(Encoding.UTF8.GetBytes(password));
-        return Convert.ToBase64String(hashedBytes);
+        var encrypted = encryptionService.PasswordEncrypt(password);
+        return encrypted;
     }
 
     public bool VerifyPassword(string password, string passwordHash)
     {
-        var hashedInput = HashPassword(password);
-        return hashedInput == passwordHash;
+        var result = encryptionService.VerifyPassword(password, passwordHash);
+        return result;
     }
 }

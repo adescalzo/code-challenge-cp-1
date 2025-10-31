@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Routing;
 
-namespace EmployeeChallenge.Infrastructure;
+namespace EmployeeChallenge.Infrastructure.General;
 
 public interface IEndpoint
 {

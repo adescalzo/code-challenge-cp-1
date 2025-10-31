@@ -1,5 +1,5 @@
 using EmployeeChallenge.Api.Core.Entities;
-using EmployeeChallenge.Infrastructure;
+using EmployeeChallenge.Infrastructure.General;
 using EmployeeChallenge.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
