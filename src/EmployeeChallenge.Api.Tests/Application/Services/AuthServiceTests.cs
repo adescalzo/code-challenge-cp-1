@@ -1,48 +1,33 @@
-using EmployeeChallenge.Api.Application.Services;
-using EmployeeChallenge.Api.Core.Entities;
-using FluentAssertions;
-using Microsoft.Extensions.Configuration;
-using NSubstitute;
 using System.IdentityModel.Tokens.Jwt;
-using EmployeeChallenge.Infrastructure;
+using Bogus;
+using EmployeeChallenge.Api.Application.Services;
+using EmployeeChallenge.Api.Tests.Builders;
+using EmployeeChallenge.Api.Tests.Mocks;
+using FluentAssertions;
 
 namespace EmployeeChallenge.Api.Tests.Application.Services;
 
 public class AuthServiceTests
 {
-    private readonly IConfiguration _configuration;
-    private readonly IClock _clock = Substitute.For<IClock>();
-    private readonly AuthService _sut;
-
-    public AuthServiceTests()
-    {
-        _configuration = Substitute.For<IConfiguration>();
-        var jwtSection = Substitute.For<IConfigurationSection>();
-
-        _configuration.GetSection("JwtSettings").Returns(jwtSection);
-        jwtSection["SecretKey"].Returns("ThisIsAVerySecureSecretKeyForTestingPurposesOnly12345");
-        jwtSection["Issuer"].Returns("TestIssuer");
-        jwtSection["Audience"].Returns("TestAudience");
-        jwtSection["ExpirationMinutes"].Returns("60");
-
-        _sut = new AuthService(_clock, _configuration);
-    }
-
+    private readonly Faker _faker = new();
     [Fact]
     public void GenerateJwtToken_ShouldReturnValidToken()
     {
         // Arrange
-        var user = new User(
-            Guid.NewGuid(),
-            "testuser",
-            "test@example.com",
-            "hashedpassword",
-            "John",
-            "Doe"
-        );
+        var now = DateTime.UtcNow;
+        var jwtSettings = new MockJwtSettings();
+        var clock = new MockClock().WithUtcNow(now);
+        var encryption = new MockEncryptionService();
+        var authService = new AuthService(clock.Instance, encryption.Instance, jwtSettings.Configuration);
+
+        var user = new UserBuilder()
+            .WithUsername("testuser")
+            .WithEmail(_faker.Internet.Email())
+            .WithName("John", "Doe")
+            .Build();
 
         // Act
-        var token = _sut.GenerateJwtToken(user);
+        var token = authService.GenerateJwtToken(user);
 
         // Assert
         token.Should().NotBeNullOrEmpty();
@@ -50,25 +35,28 @@ public class AuthServiceTests
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
-        jwtToken.Issuer.Should().Be("TestIssuer");
-        jwtToken.Audiences.Should().Contain("TestAudience");
+        jwtToken.Issuer.Should().Be(jwtSettings.GetIssuer());
+        jwtToken.Audiences.Should().Contain(jwtSettings.GetAudience());
         jwtToken.Claims.Should().Contain(c => c.Type == JwtRegisteredClaimNames.Sub && c.Value == user.Id.ToString());
         jwtToken.Claims.Should().Contain(c => c.Type == JwtRegisteredClaimNames.UniqueName && c.Value == user.Username);
         jwtToken.Claims.Should().Contain(c => c.Type == JwtRegisteredClaimNames.Email && c.Value == user.Email);
-        jwtToken.ValidTo.Should().BeCloseTo(DateTime.UtcNow.AddMinutes(60), TimeSpan.FromSeconds(5));
+        var expirationMinutes = jwtSettings.GetExpirationMinutes();
+        jwtToken.ValidTo.Should().Be(now.AddMinutes(expirationMinutes));
     }
 
     [Fact]
     public void GenerateJwtToken_WhenSecretKeyMissing_ShouldThrowInvalidOperationException()
     {
         // Arrange
-        var config = Substitute.For<IConfiguration>();
-        var jwtSection = Substitute.For<IConfigurationSection>();
-        config.GetSection("JwtSettings").Returns(jwtSection);
-        jwtSection["SecretKey"].Returns((string?)null);
+        var jwtSettings = new MockJwtSettings().WithSecretKey(null);
+        var clock = new MockClock();
+        var encryption = new MockEncryptionService();
+        var authService = new AuthService(clock.Instance, encryption.Instance, jwtSettings.Configuration);
 
-        var authService = new AuthService(_clock, config);
-        var user = new User(Guid.NewGuid(), "testuser", "test@example.com", "password", "John", "Doe");
+        var user = new UserBuilder()
+            .WithUsername("testuser")
+            .WithEmail("test@example.com")
+            .Build();
 
         // Act
         var act = () => authService.GenerateJwtToken(user);
@@ -81,16 +69,20 @@ public class AuthServiceTests
     public void GenerateJwtToken_WhenIssuerMissing_ShouldUseDefaultValue()
     {
         // Arrange
-        var config = Substitute.For<IConfiguration>();
-        var jwtSection = Substitute.For<IConfigurationSection>();
-        config.GetSection("JwtSettings").Returns(jwtSection);
-        jwtSection["SecretKey"].Returns("ThisIsAVerySecureSecretKeyForTestingPurposesOnly12345");
-        jwtSection["Issuer"].Returns((string?)null);
-        jwtSection["Audience"].Returns("TestAudience");
-        jwtSection["ExpirationMinutes"].Returns("60");
+        var jwtSettings = new MockJwtSettings()
+            .WithSecretKey("ThisIsAVerySecureSecretKeyForTestingPurposesOnly12345")
+            .WithIssuer(null)
+            .WithAudience("TestAudience")
+            .WithExpirationMinutes(60);
 
-        var authService = new AuthService(_clock, config);
-        var user = new User(Guid.NewGuid(), "testuser", "test@example.com", "password", "John", "Doe");
+        var clock = new MockClock();
+        var encryption = new MockEncryptionService();
+        var authService = new AuthService(clock.Instance, encryption.Instance, jwtSettings.Configuration);
+
+        var user = new UserBuilder()
+            .WithUsername("testuser")
+            .WithEmail("test@example.com")
+            .Build();
 
         // Act
         var token = authService.GenerateJwtToken(user);
@@ -105,10 +97,15 @@ public class AuthServiceTests
     public void HashPassword_ShouldReturnBase64Hash()
     {
         // Arrange
+        var jwtSettings = new MockJwtSettings();
+        var clock = new MockClock();
+        var encryption = new MockEncryptionService();
+        var authService = new AuthService(clock.Instance, encryption.Instance, jwtSettings.Configuration);
+
         const string password = "MySecurePassword123!";
 
         // Act
-        var hash = _sut.HashPassword(password);
+        var hash = authService.HashPassword(password);
 
         // Assert
         hash.Should().NotBeNullOrEmpty();
@@ -119,11 +116,16 @@ public class AuthServiceTests
     public void HashPassword_ShouldReturnConsistentHash()
     {
         // Arrange
+        var jwtSettings = new MockJwtSettings();
+        var clock = new MockClock();
+        var encryption = new MockEncryptionService();
+        var authService = new AuthService(clock.Instance, encryption.Instance, jwtSettings.Configuration);
+
         const string password = "MySecurePassword123!";
 
         // Act
-        var hash1 = _sut.HashPassword(password);
-        var hash2 = _sut.HashPassword(password);
+        var hash1 = authService.HashPassword(password);
+        var hash2 = authService.HashPassword(password);
 
         // Assert
         hash1.Should().Be(hash2);
@@ -133,11 +135,16 @@ public class AuthServiceTests
     public void VerifyPassword_WithCorrectPassword_ShouldReturnTrue()
     {
         // Arrange
+        var jwtSettings = new MockJwtSettings();
+        var clock = new MockClock();
+        var encryption = new MockEncryptionService();
+        var authService = new AuthService(clock.Instance, encryption.Instance, jwtSettings.Configuration);
+
         const string password = "MySecurePassword123!";
-        var hash = _sut.HashPassword(password);
+        var hash = authService.HashPassword(password);
 
         // Act
-        var result = _sut.VerifyPassword(password, hash);
+        var result = authService.VerifyPassword(password, hash);
 
         // Assert
         result.Should().BeTrue();
@@ -147,12 +154,17 @@ public class AuthServiceTests
     public void VerifyPassword_WithIncorrectPassword_ShouldReturnFalse()
     {
         // Arrange
+        var jwtSettings = new MockJwtSettings();
+        var clock = new MockClock();
+        var encryption = new MockEncryptionService();
+        var authService = new AuthService(clock.Instance, encryption.Instance, jwtSettings.Configuration);
+
         const string correctPassword = "MySecurePassword123!";
         const string incorrectPassword = "WrongPassword";
-        var hash = _sut.HashPassword(correctPassword);
+        var hash = authService.HashPassword(correctPassword);
 
         // Act
-        var result = _sut.VerifyPassword(incorrectPassword, hash);
+        var result = authService.VerifyPassword(incorrectPassword, hash);
 
         // Assert
         result.Should().BeFalse();
@@ -162,11 +174,16 @@ public class AuthServiceTests
     public void VerifyPassword_CaseSensitive_ShouldReturnFalse()
     {
         // Arrange
+        var jwtSettings = new MockJwtSettings();
+        var clock = new MockClock();
+        var encryption = new MockEncryptionService();
+        var authService = new AuthService(clock.Instance, encryption.Instance, jwtSettings.Configuration);
+
         const string password = "MySecurePassword";
-        var hash = _sut.HashPassword(password);
+        var hash = authService.HashPassword(password);
 
         // Act
-        var result = _sut.VerifyPassword("mysecurepassword", hash);
+        var result = authService.VerifyPassword("mysecurepassword", hash);
 
         // Assert
         result.Should().BeFalse();

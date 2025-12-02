@@ -2,7 +2,7 @@ using EmployeeChallenge.Api.Application.Handlers.Queries;
 using EmployeeChallenge.Api.Core.Entities;
 using EmployeeChallenge.Api.Core.Repositories;
 using EmployeeChallenge.Api.Presentation.Employees.Queries;
-using EmployeeChallenge.Infrastructure;
+using EmployeeChallenge.Infrastructure.General;
 using FluentAssertions;
 using NSubstitute;
 

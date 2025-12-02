@@ -1,0 +1,18 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet add package:*)",
+      "Bash(mkdir:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet add:*)",
+      "Bash(find:*)",
+      "Read(//home/adescalzo/dev/personal/me/code-challenge-cp-1/**)",
+      "mcp__ide__getDiagnostics",
+      "Bash(dotnet test:*)",
+      "Bash(timeout 10 dotnet run:*)",
+      "Bash(dotnet list:*)"
+    ],
+    "deny": [],
+    "ask": []
+  }
+}

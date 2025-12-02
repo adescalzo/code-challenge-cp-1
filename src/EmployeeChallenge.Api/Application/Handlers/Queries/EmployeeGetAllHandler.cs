@@ -1,7 +1,7 @@
 using EmployeeChallenge.Api.Core.Repositories;
 using EmployeeChallenge.Api.Presentation.Employees;
 using EmployeeChallenge.Api.Presentation.Employees.Queries;
-using EmployeeChallenge.Infrastructure;
+using EmployeeChallenge.Infrastructure.General;
 using EmployeeChallenge.Infrastructure.Mediator;
 
 namespace EmployeeChallenge.Api.Application.Handlers.Queries;

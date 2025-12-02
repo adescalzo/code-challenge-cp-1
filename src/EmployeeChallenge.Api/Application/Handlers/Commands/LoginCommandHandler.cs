@@ -1,7 +1,7 @@
 using EmployeeChallenge.Api.Application.Services;
 using EmployeeChallenge.Api.Core.Repositories;
 using EmployeeChallenge.Api.Presentation.Auth;
-using EmployeeChallenge.Infrastructure;
+using EmployeeChallenge.Infrastructure.General;
 using EmployeeChallenge.Infrastructure.Mediator;
 
 namespace EmployeeChallenge.Api.Application.Handlers.Commands;

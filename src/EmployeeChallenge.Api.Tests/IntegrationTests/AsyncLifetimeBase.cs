@@ -1,6 +1,7 @@
 using EmployeeChallenge.Api.Core;
 using EmployeeChallenge.Infrastructure;
 using EmployeeChallenge.Infrastructure.Data;
+using EmployeeChallenge.Infrastructure.General;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Xunit.Abstractions;
@@ -25,9 +26,9 @@ public abstract class AsyncLifetimeBase : IAsyncLifetime, IDisposable
 
     public IConfigurationRoot ConfigurationRoot { get; private set; } = default!;
 
-    public IClock Clock { get; protected set; } = new Clock();
+    private IClock Clock { get; set; } = new Clock();
 
-    public IUnitOfWork CreateUnitOfWork()
+    protected IUnitOfWork CreateUnitOfWork()
     {
         if (_unitOfWork != null)
         {
